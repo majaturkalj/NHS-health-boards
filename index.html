@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scottish NHS Health Boards</title>
+    <!--Always load the CSS file bfore JS-->
+    <link rel="stylesheet" href="leaflet\leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="leaflet\leaflet.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+
+<script>
+    var map = L.map('map', {
+			center: [56.63, -4.16],
+			zoom: 7,
+		});
+
+    // adding first basemap to map
+    var Thunderforest_Pioneer = L.tileLayer('https://{s}.tile.thunderforest.com/pioneer/{z}/{x}/{y}{r}.png?apikey={apikey}', {
+      attribution: '&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      apikey: '580d7760e4c9433fa158fa9d21b3f3be',
+      maxZoom: 22
+    });
+
+    Thunderforest_Pioneer.addTo(map);
+
+    // adding secondbasemap to map
+    var Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      maxZoom: 16
+    });
+
+    Esri_WorldGrayCanvas.addTo(map);
+
+    // adding third basemap to map
+    var Thunderforest_Neighbourhood = L.tileLayer('https://api.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey={apikey}', {
+        attribution: '&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        apikey: '580d7760e4c9433fa158fa9d21b3f3be',
+        maxZoom: 22
+    });
+
+    Thunderforest_Neighbourhood.addTo(map);
+
+    // Information box
+    let info = L.control({position: "topright"});
+    info.onAdd = function() {
+        let div = L.DomUtil.create("div", "info");
+        div.innerHTML = '<h4>Scottish NHS Health Boards</h4><p id="feature_on_hover"></p>';
+        return div;
+    };
+    info.addTo(map);
+
+    //variable to store the geojson layer
+    var geojson;
+
+    //setting varying styles for each health board using a colour scheme
+    function healthBoard_style(feature) {
+        return {
+            color: 'black',
+            weight: 1,
+            fillColor: healthBoard_color(feature.properties.h06_name),
+            fillOpacity: 0.9
+        };
+    }
+
+    function healthBoard_color(p) {
+        if(p === 'Forth Valley') return '#4E9AF1';
+        if(p === 'Fife' || p === 'Grampian' || p === 'Lanarkshire' || p === 'Orkney') return '#fed98e';
+        if(p === 'Borders' || p === 'Greater Glasgow & Clyde' || p === 'Shetland') return '#2A9D8F';
+        if(p === 'Dumfries & Galloway'|| p === 'Highland' || p === 'Lothian' || p === 'Western Isles') return '#fb6a4a';
+        if(p === 'Ayrshire & Arran' || p === 'Tayside') return '#8338EC';
+        return 'grey';
+    }
+
+    //highlight feature style on mouseover and display the name of the health board in the information box
+    let info_health_board = document.getElementById("feature_on_hover");
+    function highlight_feature(e) {
+    e.target.setStyle({weight: 3, color: "yellow", fillOpacity: 0.6});
+    e.target.bringToFront();
+        info_health_board.innerHTML = "<b>" + e.target.feature.properties.h06_name + "</b>";
+    }
+
+    //reset the style of the feature on mouseout
+    function reset_highlight(e) {
+        geojson.resetStyle(e.target);
+    }
+
+    // Adding a geojson layer to the map
+    fetch("nhs_health_boards.geojson")
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            geojson = L.geoJSON(data, {
+                style: healthBoard_style,
+                onEachFeature: function(feature, layer) {
+                layer.addEventListener("mouseover", highlight_feature);
+                layer.addEventListener("mouseout", reset_highlight);
+                }
+            }).addTo(map);
+        });
+
+    //descrition box
+    let description = L.control({position: "bottomleft"});
+    description.onAdd = function() {
+    let div = L.DomUtil.create("div", "description");
+    div.innerHTML = 
+        'Created with the Leaflet library<br>' +
+        '<img src="leaflet.png">';
+    return div;
+    };
+
+    description.addTo(map);
+
+    //basemaps control
+    var basemaps = {
+      "Thunderforest Pioneer": Thunderforest_Pioneer,
+      "Esri World Gray Canvas": Esri_WorldGrayCanvas,
+      "Thunderforest Neighbourhood": Thunderforest_Neighbourhood
+    };
+        
+    // Create overlay maps object
+    L.control.layers(basemaps).addTo(map);
+
+    //adding a scale bar to the map
+	var scale = L.control.scale();
+		scale.addTo(map);
+
+    L.control.scale ({position: 'bottomright' });
+
+</script>
+</body>
+</html>
