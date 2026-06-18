@@ -17,7 +17,12 @@
     var map = L.map('map', {
 			center: [56.63, -4.16],
 			zoom: 7,
-		});
+			maxBounds: [
+			[53.90, -10.57],
+			[61.10, 3.89]],
+			maxZoom:10,
+			minZoom:5
+			});
 
     // adding first basemap to map
     var Thunderforest_Pioneer = L.tileLayer('https://{s}.tile.thunderforest.com/pioneer/{z}/{x}/{y}{r}.png?apikey={apikey}', {
